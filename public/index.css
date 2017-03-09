@@ -4,3 +4,93 @@ body {
   font-family:Segoe UI WestEuropean,Segoe UI,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
+.badge {
+    font-size: .32em;
+    /* font-style: italic; */
+    display: block;
+    position: absolute;
+    top: -0.65em;
+    right: -1.5em;
+    width: 2.5em;
+    height: 2em;
+    line-height: 2em;
+    border-radius: 20%;
+    text-align: center;
+    font-family: Segoe UI WestEuropean,Segoe UI,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,sans-serif;
+    color: #FAFAFA;
+    background: #0078d7;
+}
+.ms-CalloutExample-callout {
+    max-width: 350px
+}
+.ms-CalloutExample-configArea {
+    min-width: 350px;
+    display: inline-block
+}
+.ms-CalloutExample-buttonArea {
+    vertical-align: top;
+    display: inline-block;
+    min-width: 130px;
+    margin: 0 100px;
+    text-align: center;
+    height: 32px
+}
+.ms-CalloutCoverExample-buttonArea {
+    vertical-align: top;
+    display: inline-block;
+    margin: 0 100px;
+    text-align: center;
+    min-width: 130px
+}
+.ms-CalloutCoverExample-buttonArea>.ms-Button {
+    text-align: center;
+    height: 31px;
+    width: 130px
+}
+.ms-CalloutBasicExample-buttonArea {
+    vertical-align: top;
+    display: inline-block;
+    text-align: center
+}
+.ms-CalloutExample-title {
+    font-size: x-large
+}
+.ms-CalloutExample-inner {
+    height: 100%;
+    padding: 0 24px 20px
+}
+.ms-CalloutExample-header {
+    padding: 18px 24px 12px
+}
+.ms-CalloutExample-title {
+    margin: 0;
+    font-family: "Segoe UI WestEuropean", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 21px;
+    font-weight: 100;
+    color: #333333;
+    font-weight: 300
+}
+.ms-CalloutExample-subText {
+    margin: 0;
+    font-family: "Segoe UI WestEuropean", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    font-weight: 400;
+    color: #333333;
+}
+.ms-CalloutExample-link {
+    font-family: "Segoe UI WestEuropean", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    font-weight: 400;
+    color: #333333
+}
+
+.notification-name-link{
+    float: left;
+}
+.notification-delete-link{
+    float: right;
+    padding-left: 20px;
+}
