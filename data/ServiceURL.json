@@ -1,0 +1,4 @@
+{
+  "PatientInfoURL": "http://localhost:3001/patientsInfo",
+  "PatientUpdateURL": "http://localhost:3001/updatePatientData"
+}

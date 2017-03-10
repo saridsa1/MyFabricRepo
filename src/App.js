@@ -4,20 +4,21 @@ import data from '../data/TestData.json';
 import _columns from '../data/ColumnConfig';
 
 import {css} from 'glamor';
+import ServiceURL from '../data/ServiceURL.json';
 import {DetailsList} from 'office-ui-fabric-react/lib/DetailsList';
 import {SelectionMode} from 'office-ui-fabric-react/lib/Selection';
 import {TextField} from 'office-ui-fabric-react/lib/TextField';
 import {ContextualMenu} from  'office-ui-fabric-react/lib/ContextualMenu'
 import {Link} from 'office-ui-fabric-react/lib/Link'
-import { Callout } from 'office-ui-fabric-react/lib/Callout';
-import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
-import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
+import {Callout} from 'office-ui-fabric-react/lib/Callout';
+import {MessageBar, MessageBarType} from 'office-ui-fabric-react/lib/MessageBar';
+import {Dialog, DialogType, DialogFooter} from 'office-ui-fabric-react/lib/Dialog';
+import {Button, ButtonType} from 'office-ui-fabric-react/lib/Button';
 import {
-  Persona,
-  PersonaSize,
-  PersonaPresence
-} from 'office-ui-fabric-react/lib/Persona';
-import { Button, ButtonType } from 'office-ui-fabric-react/lib/Button';
+    Spinner,
+    SpinnerSize
+} from 'office-ui-fabric-react/lib/Spinner';
+import * as axios from 'axios';
 
 class App extends Component {
     constructor(props) {
@@ -28,8 +29,22 @@ class App extends Component {
             displayData: _items,
             actualData: _items,
             columns: _columns,
-            appointments : []
+            appointments: [],
+            loadingPatientData: true
         };
+    }
+
+    componentDidMount() {
+        axios.get(ServiceURL["PatientInfoURL"]).then(function (response) {
+            let serverResponse = Object.keys(response.data).map(function (value, index) {
+                return response.data[value];
+            });
+            this.setState({
+                actualData: serverResponse,
+                displayData: serverResponse,
+                loadingPatientData: false
+            })
+        }.bind(this));
     }
 
     _renderItemColumn(item, index, column) {
@@ -77,151 +92,173 @@ class App extends Component {
             item: null
         });
     }
-    _onCalloutDismiss(){
-      this.setState({
+
+    _onCalloutDismiss() {
+        this.setState({
             appointmentsMenuVisible: false,
             appointmentsScreenTarget: null
-      });
+        });
     }
 
     _onNewAppointment() {
         let _appointments = this.state.appointments;
         let appointmentAlreadyExists = false;
-        for(var aptCounter = 0; aptCounter < _appointments.length && !appointmentAlreadyExists; aptCounter++){
-          let value = _appointments[aptCounter];
-          if(value.assignedId === this.state.selectedItem.assignedId){
-              appointmentAlreadyExists = true;
-          }
+        for (let aptCounter = 0; aptCounter < _appointments.length && !appointmentAlreadyExists; aptCounter++) {
+            let value = _appointments[aptCounter];
+            if (value.assignedId === this.state.selectedItem.assignedId) {
+                appointmentAlreadyExists = true;
+            }
         }
-        if(appointmentAlreadyExists){
+        if (appointmentAlreadyExists) {
             this.setState({
-                appointmentError : true,
-                appointments : _appointments
+                appointmentError: true,
+                appointments: _appointments
             });
         } else {
-          _appointments.push(this.state.selectedItem);
-          this.setState({
-              appointmentError : false,
-              appointments : _appointments
-          });        
+            _appointments.push(this.state.selectedItem);
+            this.setState({
+                appointmentError: false,
+                appointments: _appointments
+            });
         }
     }
 
     _onEditDetails() {
-      console.log(event, this.state.selectedItem);
-      this.setState({
-          patientDetailView: true
-      });
-        
-    }
-
-    _showAppointments(event){
-      this.setState({
-          appointmentsMenuVisible: true
-      });
-    }
-    _deleteAppointment(appointment){
-        let _appointments = this.state.appointments.filter(function(value, index){
-            return (value.assignedId !== appointment.assignedId);
-        })
+        console.log(event, this.state.selectedItem);
         this.setState({
-          appointments: _appointments
-      });
+            patientDetailView: true
+        });
 
     }
+
+    _showAppointments() {
+        this.setState({
+            appointmentsMenuVisible: true
+        });
+    }
+
+    _deleteAppointment(appointment) {
+        let _appointments = this.state.appointments.filter(function (value, index) {
+            return (value.assignedId !== appointment.assignedId);
+        });
+        this.setState({
+            appointments: _appointments
+        });
+
+    }
+
     _onViewHistory() {
         console.log(event, this.state.selectedItem);
     }
-    _noop(){
-      console.log("No operation invoked");
+
+    _noop() {
+        console.log("No operation invoked");
     }
-    _dismissPatientDetailView(){
-      this.setState({
-          patientDetailView: false
-      })
+
+    _dismissPatientDetailView() {
+        this.setState({
+            patientDetailView: false
+        })
     }
-    _savePatientDetails(){
-      let patientId = this.state.selectedItem.assignedId;
-      let actualDataRef = this.state.actualData;
-      let index = actualDataRef.findIndex(function (obj) {
+
+    _savePatientDetails() {
+        let patientId = this.state.selectedItem.assignedId;
+        let actualDataRef = this.state.actualData;
+        let index = actualDataRef.findIndex(function (obj) {
             return patientId === obj.assignedId;
-      });
+        });
 
-      actualDataRef[index].firstName = this.refs.firstName.value;
-      actualDataRef[index].lastName = this.refs.lastName.value;
-      actualDataRef[index].personalInfo.address = this.refs.address.value;
-      actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
-      actualDataRef[index].personalInfo.profession  = this.refs.profession.value;
-      
-      this.setState({
-          displayData: actualDataRef,
-          patientDetailView: false,
-          actualData: actualDataRef          
-      });      
+        actualDataRef[index].firstName = this.refs.firstName.value;
+        actualDataRef[index].lastName = this.refs.lastName.value;
+        actualDataRef[index].personalInfo.address = this.refs.address.value;
+        actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
+        actualDataRef[index].personalInfo.profession = this.refs.profession.value;
+
+        this.setState({
+            displayData: actualDataRef,
+            patientDetailView: false,
+            actualData: actualDataRef
+        });
     }
-    render() {
-      let appointmentsMenuItems = [];
-      let examplePersona = {};
 
-      if(this.state.appointmentsMenuVisible){        
-         appointmentsMenuItems = this.state.appointments.map(function(value, index){
-              var printName = value.firstName + (value.lastName === undefined ? "" : ", "+value.lastName) ;
-              return (
-                <span key={value.assignedId} className='ms-CalloutExample-subText'>
-                  <p className="notification-name-link">{value.assignedId} | {printName} </p>
-                  <p className="notification-delete-link"><Link data-selection-invoke={ true } onClick={this._deleteAppointment.bind(this, value)}><i className="ms-Icon ms-Icon--Delete" aria-hidden="true"></i></Link></p>
-                </span>)
-         }.bind(this));
-      }      
-        return (
-            <div className="ms-Grid">
-                  {
-                    (this.state.appointmentError) ?
-                      <MessageBar messageBarType={ MessageBarType.blocked} onDismiss={this._noop.bind(this)} isMultiline={ false }>Appoinment already exists for the patient</MessageBar>
-                      :
-                      (null) 
-                  }
-                <div className="ms-Grid-row" { ...css({backgroundColor: '#FAFAFA',boxShadow: '0 0 20px rgba(192, 192, 192, .3)', padding: 20}) }>
-                    <div className="ms-Grid-col ms-u-sm11 ms-u-md11 ms-u-lg11">
-                        <span className="ms-font-su ms-fontColor-blue">
-                          Good Morning ! 
+    renderAfterLoad() {
+        let appointmentsMenuItems = [];
+
+        if (this.state.appointmentsMenuVisible) {
+            appointmentsMenuItems = this.state.appointments.map(function (value) {
+                let printName = value.firstName + (value.lastName === undefined ? "" : ", " + value.lastName);
+                return (
+                    <div key={value.assignedId} className='ms-CalloutExample-subText'>
+                        <p className="notification-name-link">{value.assignedId} | {printName} </p>
+                        <p className="notification-delete-link"><Link data-selection-invoke={ true }
+                                                                      onClick={this._deleteAppointment.bind(this, value)}><i
+                            className="ms-Icon ms-Icon--Delete" aria-hidden="true"/></Link></p>
+                    </div>)
+            }.bind(this));
+        }
+        return (<div className="ms-Grid">
+            {
+                (this.state.appointmentError) ?
+                    <MessageBar messageBarType={ MessageBarType.blocked} onDismiss={this._noop.bind(this)}
+                                isMultiline={ false }>Appointment already exists for the patient</MessageBar>
+                    :
+                    (null)
+            }
+            <div className="ms-Grid-row" { ...css({
+                backgroundColor: '#2488d8',
+                boxShadow: '0 0 20px rgba(192, 192, 192, .3)',
+                padding: 20
+            }) }>
+                <div className="ms-Grid-col ms-u-sm11 ms-u-md11 ms-u-lg11">
+                        <span className="ms-font-su ms-fontColor-white">
+                          Good Morning !
                         </span>
-                        <br/>
-                        <span className="ms-font-xs ms-fontColor-blue">Thu Mar 09 2017 10:38</span>
-                    </div>
-                    <div className="ms-Grid-col ms-u-sm1 ms-u-md1 ms-u-lg1">
-                      <br/>
-                      <span className="ms-font-su ms-fontColor-blue"  ref={ (menuButton) => this._menuButtonElement = menuButton }>
-                        {
-                          (this.state.appointments.length > 0 ) ?                             
-                            <Link data-selection-invoke={ true } onClick={this._showAppointments.bind(this, event)}>
-                              <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"><span className="badge">{this.state.appointments.length}</span></i>
-                              {this.state.appointmentsMenuVisible ? 
-                                <Callout className='ms-CalloutExample-callout' gapSpace={ 2 } targetElement={ this._menuButtonElement } onDismiss={ this._onCalloutDismiss.bind(this) } setInitialFocus={ true }>
-                                  <div className='ms-CalloutExample-header'>
-                                    <p className='ms-CalloutExample-title'>
-                                        All of your appointments
-                                    </p>
-                                  </div>
-                                  <div className='ms-CalloutExample-inner'>
-                                  <div className='ms-CalloutExample-content'>
-                                     {appointmentsMenuItems}
-                                  </div>
-                                </div>
-                              </Callout>
-                               : (null)}
-                            </Link>                            
-                           : 
-                           <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"></i>  
-                        }                                                
-                      </span>  
-                    </div>                    
+                    <br/>
+                    <span className="ms-font-xs ms-fontColor-white">Thu Mar 09 2017 10:38</span>
                 </div>
-                <div className="ms-Grid-row">
-                    <div className="ms-Grid-col ms-u-sm12 ms-u-md12 ms-u-lg12" { ...css({paddingLeft: 20, paddingTop: 20 }) }>
-                        <div>
-                            <TextField label='Patient ID' onChanged={this._onFilterChanged.bind(this)}/>
-                            <br/>
+                <div className="ms-Grid-col ms-u-sm1 ms-u-md1 ms-u-lg1">
+                    <br/>
+                    <span className="ms-font-xxl ms-fontColor-white"
+                          ref={ (menuButton) => this._menuButtonElement = menuButton }>
+                        {
+                            (this.state.appointments.length > 0 ) ?
+                                <Link className="ms-fontColor-white" data-selection-invoke={ true }
+                                      onClick={this._showAppointments.bind(this, event)}>
+                                    <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"><span
+                                        className="badge">{this.state.appointments.length}</span></i>
+                                    {this.state.appointmentsMenuVisible ?
+                                        <Callout className='ms-CalloutExample-callout' gapSpace={ 2 }
+                                                 targetElement={ this._menuButtonElement }
+                                                 onDismiss={ this._onCalloutDismiss.bind(this) }
+                                                 setInitialFocus={ true }>
+                                            <div className='ms-CalloutExample-header'>
+                                                <p className='ms-CalloutExample-title'>
+                                                    All of your appointments
+                                                </p>
+                                            </div>
+                                            <div className='ms-CalloutExample-inner'>
+                                                <div className='ms-CalloutExample-content'>
+                                                    {appointmentsMenuItems}
+                                                </div>
+                                            </div>
+                                        </Callout>
+                                        : (null)}
+                                </Link>
+                                :
+                                <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"/>
+                        }
+                      </span>
+                </div>
+            </div>
+            <div className="ms-Grid-row">
+                <div className="ms-Grid-col ms-u-sm12 ms-u-md12 ms-u-lg12" { ...css({
+                    paddingLeft: 20,
+                    paddingTop: 20
+                }) }>
+                    <div>
+                        <TextField label='Patient ID' onChanged={this._onFilterChanged.bind(this)}/>
+                        <br/>
+                        <div className="scrollDetailsList">
                             <DetailsList
                                 items={ this.state.displayData }
                                 setKey='set'
@@ -231,61 +268,75 @@ class App extends Component {
                         </div>
                     </div>
                 </div>
-                {                  
-                  this.state.patientDetailView ? 
-                  <Dialog
-                    isOpen={ true }
-                    type={ DialogType.largeHeader  }
-                    onDismiss={ this._dismissPatientDetailView.bind(this) }
-                    title={this.state.selectedItem.firstName}
-                    isBlocking={ false }
-                    containerClassName='ms-dialogMainOverride'
-                  >
-                    <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName} required={ true }/>
-                    <TextField label='Last Name' ref="lastName" value={this.state.selectedItem.lastName} required={ true }/>
-                    <TextField label='Phone number' ref="phoneNumber" value={this.state.selectedItem.personalInfo.phoneNumber} required={ true }/>                    
-                    <TextField label='Address' ref="address" multiline autoAdjustHeight value={this.state.selectedItem.personalInfo.address} required={ true }/>            
-                    <TextField label='Profession' ref="profession" value={this.state.selectedItem.personalInfo.profession}/> 
-
-                    <DialogFooter>
-                      <Button buttonType={ ButtonType.primary } onClick={ this._savePatientDetails.bind(this) }>Save</Button>
-                      <Button onClick={ this._dismissPatientDetailView.bind(this) }>Cancel</Button>
-                    </DialogFooter>                   
-                  </Dialog> 
-                 : (null)
-                }
-                {this.state.isContextMenuVisible ? <ContextualMenu
-                        target={ this.state.screenTarget }
-                        isBeakVisible={ true }
-                        gapSpace={ 10 }
-                        directionalHintFixed={ false }
-                        onDismiss={this._onContextMenuDismiss.bind(this)}
-                        items={
-                            [
-                                {
-                                    key: 'newAppointment',
-                                    name: 'New Appointment',
-                                    icon: 'Add',
-                                    onClick: this._onNewAppointment.bind(this)
-                                },
-                                {
-                                    key: 'editDetails',
-                                    name: 'Edit details',
-                                    icon: 'Edit',
-                                    onClick: this._onEditDetails.bind(this)
-                                },
-                                {
-                                    key: 'viewHistory',
-                                    name: 'View History',
-                                    icon: 'History',
-                                    onClick: this._onViewHistory.bind(this)
-                                }
-                            ]
-                        }
-                    /> : (null)}
             </div>
+            {
+                this.state.patientDetailView ?
+                    <Dialog
+                        isOpen={ true }
+                        type={ DialogType.largeHeader  }
+                        onDismiss={ this._dismissPatientDetailView.bind(this) }
+                        title={this.state.selectedItem.firstName}
+                        isBlocking={ false }
+                        containerClassName='ms-dialogMainOverride'>
+                        <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName}
+                                   required={ true }/>
+                        <TextField label='Last Name' ref="lastName" value={this.state.selectedItem.lastName}
+                                   required={ true }/>
+                        <TextField label='Phone number' ref="phoneNumber"
+                                   value={this.state.selectedItem.personalInfo.phoneNumber} required={ true }/>
+                        <TextField label='Address' ref="address" multiline autoAdjustHeight
+                                   value={this.state.selectedItem.personalInfo.address} required={ true }/>
+                        <TextField label='Profession' ref="profession"
+                                   value={this.state.selectedItem.personalInfo.profession}/>
 
-        );
+                        <DialogFooter>
+                            <Button buttonType={ ButtonType.primary }
+                                    onClick={ this._savePatientDetails.bind(this) }>Save</Button>
+                            <Button onClick={ this._dismissPatientDetailView.bind(this) }>Cancel</Button>
+                        </DialogFooter>
+                    </Dialog>
+                    : (null)
+            }
+            {this.state.isContextMenuVisible ? <ContextualMenu
+                    target={ this.state.screenTarget }
+                    isBeakVisible={ true }
+                    gapSpace={ 10 }
+                    directionalHintFixed={ false }
+                    onDismiss={this._onContextMenuDismiss.bind(this)}
+                    items={
+                        [
+                            {
+                                key: 'newAppointment',
+                                name: 'New Appointment',
+                                icon: 'Add',
+                                onClick: this._onNewAppointment.bind(this)
+                            },
+                            {
+                                key: 'editDetails',
+                                name: 'Edit details',
+                                icon: 'Edit',
+                                onClick: this._onEditDetails.bind(this)
+                            },
+                            {
+                                key: 'viewHistory',
+                                name: 'View History',
+                                icon: 'History',
+                                onClick: this._onViewHistory.bind(this)
+                            }
+                        ]
+                    }
+                /> : (null)}
+        </div>)
+
+    }
+
+    render() {
+        return (
+            (this.state.loadingPatientData) ?
+                (<Spinner className="html-center-align" type={ SpinnerSize.large }
+                          label='Patient data, still loading...'/>) :
+                (this.renderAfterLoad())
+        )
     }
 }
 
