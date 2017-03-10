@@ -94,3 +94,10 @@ body {
     float: right;
     padding-left: 20px;
 }
+.ms-dialogMainOverride{
+    max-width:550px!important;
+    min-width: 546px!important;
+}
+.is-horizontalConstrained{
+        overflow-x: hidden!important;
+}
