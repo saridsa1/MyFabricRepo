@@ -11,6 +11,13 @@ import {ContextualMenu} from  'office-ui-fabric-react/lib/ContextualMenu'
 import {Link} from 'office-ui-fabric-react/lib/Link'
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
+import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
+import {
+  Persona,
+  PersonaSize,
+  PersonaPresence
+} from 'office-ui-fabric-react/lib/Persona';
+import { Button, ButtonType } from 'office-ui-fabric-react/lib/Button';
 
 class App extends Component {
     constructor(props) {
@@ -101,7 +108,11 @@ class App extends Component {
     }
 
     _onEditDetails() {
-        console.log(event, this.state.selectedItem);
+      console.log(event, this.state.selectedItem);
+      this.setState({
+          patientDetailView: true
+      });
+        
     }
 
     _showAppointments(event){
@@ -124,8 +135,34 @@ class App extends Component {
     _noop(){
       console.log("No operation invoked");
     }
+    _dismissPatientDetailView(){
+      this.setState({
+          patientDetailView: false
+      })
+    }
+    _savePatientDetails(){
+      let patientId = this.state.selectedItem.assignedId;
+      let actualDataRef = this.state.actualData;
+      let index = actualDataRef.findIndex(function (obj) {
+            return patientId === obj.assignedId;
+      });
+
+      actualDataRef[index].firstName = this.refs.firstName.value;
+      actualDataRef[index].lastName = this.refs.lastName.value;
+      actualDataRef[index].personalInfo.address = this.refs.address.value;
+      actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
+      actualDataRef[index].personalInfo.profession  = this.refs.profession.value;
+      
+      this.setState({
+          displayData: actualDataRef,
+          patientDetailView: false,
+          actualData: actualDataRef          
+      });      
+    }
     render() {
       let appointmentsMenuItems = [];
+      let examplePersona = {};
+
       if(this.state.appointmentsMenuVisible){        
          appointmentsMenuItems = this.state.appointments.map(function(value, index){
               var printName = value.firstName + (value.lastName === undefined ? "" : ", "+value.lastName) ;
@@ -135,7 +172,7 @@ class App extends Component {
                   <p className="notification-delete-link"><Link data-selection-invoke={ true } onClick={this._deleteAppointment.bind(this, value)}><i className="ms-Icon ms-Icon--Delete" aria-hidden="true"></i></Link></p>
                 </span>)
          }.bind(this));
-      }
+      }      
         return (
             <div className="ms-Grid">
                   {
@@ -158,7 +195,7 @@ class App extends Component {
                         {
                           (this.state.appointments.length > 0 ) ?                             
                             <Link data-selection-invoke={ true } onClick={this._showAppointments.bind(this, event)}>
-                              <i className="ms-Icon ms-Icon--EventInfo" aria-hidden="true"><span className="badge">{this.state.appointments.length}</span></i>
+                              <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"><span className="badge">{this.state.appointments.length}</span></i>
                               {this.state.appointmentsMenuVisible ? 
                                 <Callout className='ms-CalloutExample-callout' gapSpace={ 2 } targetElement={ this._menuButtonElement } onDismiss={ this._onCalloutDismiss.bind(this) } setInitialFocus={ true }>
                                   <div className='ms-CalloutExample-header'>
@@ -175,7 +212,7 @@ class App extends Component {
                                : (null)}
                             </Link>                            
                            : 
-                           <i className="ms-Icon ms-Icon--EventInfo" aria-hidden="true"></i>  
+                           <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"></i>  
                         }                                                
                       </span>  
                     </div>                    
@@ -194,6 +231,29 @@ class App extends Component {
                         </div>
                     </div>
                 </div>
+                {                  
+                  this.state.patientDetailView ? 
+                  <Dialog
+                    isOpen={ true }
+                    type={ DialogType.largeHeader  }
+                    onDismiss={ this._dismissPatientDetailView.bind(this) }
+                    title={this.state.selectedItem.firstName}
+                    isBlocking={ false }
+                    containerClassName='ms-dialogMainOverride'
+                  >
+                    <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName} required={ true }/>
+                    <TextField label='Last Name' ref="lastName" value={this.state.selectedItem.lastName} required={ true }/>
+                    <TextField label='Phone number' ref="phoneNumber" value={this.state.selectedItem.personalInfo.phoneNumber} required={ true }/>                    
+                    <TextField label='Address' ref="address" multiline autoAdjustHeight value={this.state.selectedItem.personalInfo.address} required={ true }/>            
+                    <TextField label='Profession' ref="profession" value={this.state.selectedItem.personalInfo.profession}/> 
+
+                    <DialogFooter>
+                      <Button buttonType={ ButtonType.primary } onClick={ this._savePatientDetails.bind(this) }>Save</Button>
+                      <Button onClick={ this._dismissPatientDetailView.bind(this) }>Cancel</Button>
+                    </DialogFooter>                   
+                  </Dialog> 
+                 : (null)
+                }
                 {this.state.isContextMenuVisible ? <ContextualMenu
                         target={ this.state.screenTarget }
                         isBeakVisible={ true }
