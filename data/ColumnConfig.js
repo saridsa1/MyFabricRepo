@@ -1,4 +1,4 @@
-let columns = [];
+var columns = [];
 columns.push({
     key: "assignedId",
     name: "Patient ID",
