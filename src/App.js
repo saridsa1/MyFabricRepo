@@ -18,9 +18,10 @@ import {
     Spinner,
     SpinnerSize
 } from 'office-ui-fabric-react/lib/Spinner';
-import * as axios from 'axios';
+import axios from 'axios';
+import moment from 'moment';
 
-class App extends Component {
+class AppointmentsApp extends Component {
     constructor(props) {
         super(props);
         let _items = data;
@@ -32,10 +33,13 @@ class App extends Component {
             appointments: [],
             loadingPatientData: true
         };
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
     }
 
     componentDidMount() {
+
         axios.get(ServiceURL["PatientInfoURL"]).then(function (response) {
+
             let serverResponse = Object.keys(response.data).map(function (value, index) {
                 return response.data[value];
             });
@@ -45,6 +49,18 @@ class App extends Component {
                 loadingPatientData: false
             })
         }.bind(this));
+
+        axios.get("http://localhost:3001/appointments/byDate").then(function (response) {
+            if (response.data !== null) {
+                let serverResponse = Object.keys(response.data).map(function (value, index) {
+                    return response.data[value];
+                });
+                console.log(serverResponse);
+                this.setState({
+                    appointments: serverResponse
+                })
+            }
+        }.bind(this))
     }
 
     _renderItemColumn(item, index, column) {
@@ -54,12 +70,12 @@ class App extends Component {
             case 'phoneNumber':
                 fieldContent = item['personalInfo']['phoneNumber'];
                 return <span data-selection-disabled={ true } data-selection-invoke={ true }
-                             className={App}>{ fieldContent }</span>;
+                             className={AppointmentsApp}>{ fieldContent }</span>;
             case 'assignedId' :
                 return <Link data-selection-invoke={ true }
                              onClick={ this._onItemInvoked.bind(this, event, item) }>{ patientId }</Link>;
             default:
-                return <span data-selection-disabled={ true } className={App} data-selection-invoke={ true }
+                return <span data-selection-disabled={ true } className={AppointmentsApp} data-selection-invoke={ true }
                              style={ {color: fieldContent} }>{ fieldContent }</span>;
         }
     }
@@ -115,10 +131,17 @@ class App extends Component {
                 appointments: _appointments
             });
         } else {
-            _appointments.push(this.state.selectedItem);
-            this.setState({
-                appointmentError: false,
-                appointments: _appointments
+            axios.post("http://localhost:3001/appointments/create", JSON.stringify(this.state.selectedItem)).then(function () {
+                _appointments.push(this.state.selectedItem);
+
+                this.setState({
+                    appointmentError: false,
+                    appointments: _appointments
+                });
+
+            }.bind(this)).catch(function (err) {
+                console.log(err);
+                alert("An error occurred while saving the appointments");
             });
         }
     }
@@ -138,12 +161,21 @@ class App extends Component {
     }
 
     _deleteAppointment(appointment) {
-        let _appointments = this.state.appointments.filter(function (value, index) {
-            return (value.assignedId !== appointment.assignedId);
+        axios.post("http://localhost:3001/appointments/delete", JSON.stringify(appointment)).then(function () {
+
+            let _appointments = this.state.appointments.filter(function (value, index) {
+                return (value.assignedId !== appointment.assignedId);
+            });
+            this.setState({
+                appointments: _appointments
+            });
+
+
+        }.bind(this)).catch(function (err) {
+            console.log(err);
+            alert("An error occurred while saving the appointments");
         });
-        this.setState({
-            appointments: _appointments
-        });
+
 
     }
 
@@ -161,6 +193,18 @@ class App extends Component {
         })
     }
 
+    _saveAllAppointments() {
+        var appointments = this.state.appointments;
+        axios.post("http://localhost:3001/appointments/create", JSON.stringify(appointments)).then(function (response) {
+            this.setState({
+                appointments: [],
+                appointmentsMenuVisible: false
+            })
+        }.bind(this)).catch(function (err) {
+            console.log(err);
+            alert("An error occurred while saving the appointments");
+        })
+    }
     _savePatientDetails() {
         let patientId = this.state.selectedItem.assignedId;
         let actualDataRef = this.state.actualData;
@@ -168,21 +212,42 @@ class App extends Component {
             return patientId === obj.assignedId;
         });
 
-        actualDataRef[index].firstName = this.refs.firstName.value;
-        actualDataRef[index].lastName = this.refs.lastName.value;
-        actualDataRef[index].personalInfo.address = this.refs.address.value;
-        actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
-        actualDataRef[index].personalInfo.profession = this.refs.profession.value;
+        let updatedData = {
+            assignedId: patientId,
+            firstName: this.refs.firstName.value,
+            lastName: this.refs.lastName.value,
+        };
 
-        this.setState({
-            displayData: actualDataRef,
-            patientDetailView: false,
-            actualData: actualDataRef
-        });
+        updatedData.personalInfo = {
+            address: this.refs.address.value,
+            phoneNumber: this.refs.phoneNumber.value,
+            profession: this.refs.profession.value
+        };
+
+        axios.post("http://localhost:3001/updatePatientData", JSON.stringify(updatedData)).then(function (response) {
+            actualDataRef[index].firstName = this.refs.firstName.value;
+            actualDataRef[index].lastName = this.refs.lastName.value;
+            actualDataRef[index].personalInfo.address = this.refs.address.value;
+            actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
+            actualDataRef[index].personalInfo.profession = this.refs.profession.value;
+
+            this.setState({
+                displayData: actualDataRef,
+                patientDetailView: false,
+                actualData: actualDataRef
+            });
+        }.bind(this)).catch(function (err) {
+            alert("An error occurred while saving the data");
+            this.setState({
+                patientDetailView: false
+            });
+        }.bind(this));
+
     }
 
     renderAfterLoad() {
         let appointmentsMenuItems = [];
+        let dateString = moment(new Date()).format('MMMM Do YYYY, h:mm:ss a');
 
         if (this.state.appointmentsMenuVisible) {
             appointmentsMenuItems = this.state.appointments.map(function (value) {
@@ -214,7 +279,7 @@ class App extends Component {
                           Good Morning !
                         </span>
                     <br/>
-                    <span className="ms-font-xs ms-fontColor-white">Thu Mar 09 2017 10:38</span>
+                    <span className="ms-font-xs ms-fontColor-white">{ dateString }</span>
                 </div>
                 <div className="ms-Grid-col ms-u-sm1 ms-u-md1 ms-u-lg1">
                     <br/>
@@ -340,4 +405,4 @@ class App extends Component {
     }
 }
 
-export default App;
+export default AppointmentsApp;

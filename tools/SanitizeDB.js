@@ -18,7 +18,8 @@ var imagesPatientMap = data.map(function (value) {
     }
 });
 
-var patientDataMap = data.map(function (value) {
+var patientInfo = {};
+data.map(function (value) {
     var personalInfo = {
         address: "",
         phoneNumber: "",
@@ -38,17 +39,18 @@ var patientDataMap = data.map(function (value) {
             age: age
         }
     }
-    return {
+    patientInfo[value.assignedId] = {
         assignedId: value.assignedId,
         createdDate: value.createdDate,
         firstName: value.firstName,
         lastName: value.lastName,
         personalInfo: personalInfo
-    }
+    };
+    return "";
 });
 
 var seperatedData = {
-    PatientInfo: patientDataMap,
+    PatientInfo: patientInfo,
     PatientImages: imagesPatientMap
 };
 

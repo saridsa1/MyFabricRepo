@@ -26,16 +26,19 @@ body {
     background: #FAFAFA;
 }
 .ms-CalloutExample-callout {
-    max-width: 350px
+    max-width: 400px;
+    width: 390px;
 }
 .ms-CalloutExample-configArea {
     min-width: 350px;
     display: inline-block
 }
 .ms-CalloutExample-title {
-    font-size: large
+    font-size: large;
+    float: left
 }
 .ms-CalloutExample-inner {
+    max-height: 300px;
     height: 100%;
     padding-top: 0;
     padding-right: 24px;
@@ -43,7 +46,8 @@ body {
     padding-bottom: 20px;
 }
 .ms-CalloutExample-header {
-    padding: 18px 24px 12px
+    padding: 18px 24px 12px;
+    height: 20px;
 }
 .ms-CalloutExample-title {
     margin: 0;
@@ -61,6 +65,8 @@ body {
     font-weight: 100;
     color: #333333;
     padding-bottom: 3px;
+    float: left;
+    width: 92%
 }
 
 .ms-CalloutExample-link {
@@ -99,4 +105,8 @@ body {
     top: 45%;
     left: 45%;
     position: absolute !important;
+}
+
+.pull-right {
+    float: right;
 }

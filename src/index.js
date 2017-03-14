@@ -1,9 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import AppointmentsApp from './App';
+import moment from 'moment';
 import './index.css';
 
-ReactDOM.render(
-  <App />,
-  document.getElementById('root')
-);
+
+let now = moment();
+let time = ((now.hour()) >= 12 ? ' PM' : ' AM');
+console.log(time);
+if (time.trim() === 'AM') {
+    ReactDOM.render(
+        <AppointmentsApp />,
+        document.getElementById('root')
+    );
+}
