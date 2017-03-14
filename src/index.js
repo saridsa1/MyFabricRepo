@@ -8,9 +8,9 @@ import './index.css';
 let now = moment();
 let time = ((now.hour()) >= 12 ? ' PM' : ' AM');
 console.log(time);
-if (time.trim() === 'AM') {
+//if (time.trim() === 'AM') {
     ReactDOM.render(
         <AppointmentsApp />,
         document.getElementById('root')
     );
-}
+//}
