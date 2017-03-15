@@ -1,4 +1,5 @@
 {
-  "PatientInfoURL": "http://localhost:3001/patientsInfo",
-  "PatientUpdateURL": "http://localhost:3001/updatePatientData"
+  "Production": {
+    "BaseURL" : "https://homeo-ui-server.herokuapp.com/"
+  }
 }

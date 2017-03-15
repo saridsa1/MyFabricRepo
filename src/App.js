@@ -37,8 +37,8 @@ class AppointmentsApp extends Component {
     }
 
     componentDidMount() {
-
-        axios.get(ServiceURL["PatientInfoURL"]).then(function (response) {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
+        axios.get(baseServiceURL.concat("patientsInfo")).then(function (response) {
 
             let serverResponse = Object.keys(response.data).map(function (value, index) {
                 return response.data[value];
@@ -50,7 +50,7 @@ class AppointmentsApp extends Component {
             })
         }.bind(this));
 
-        axios.get("http://localhost:3001/appointments/byDate").then(function (response) {
+        axios.get(baseServiceURL.concat("appointments/byDate")).then(function (response) {
             if (response.data !== null) {
                 let serverResponse = Object.keys(response.data).map(function (value, index) {
                     return response.data[value];
@@ -117,6 +117,7 @@ class AppointmentsApp extends Component {
     }
 
     _onNewAppointment() {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
         let _appointments = this.state.appointments;
         let appointmentAlreadyExists = false;
         for (let aptCounter = 0; aptCounter < _appointments.length && !appointmentAlreadyExists; aptCounter++) {
@@ -131,7 +132,7 @@ class AppointmentsApp extends Component {
                 appointments: _appointments
             });
         } else {
-            axios.post("http://localhost:3001/appointments/create", JSON.stringify(this.state.selectedItem)).then(function () {
+            axios.post(baseServiceURL.concat("appointments/create"), JSON.stringify(this.state.selectedItem)).then(function () {
                 _appointments.push(this.state.selectedItem);
 
                 this.setState({
@@ -161,7 +162,8 @@ class AppointmentsApp extends Component {
     }
 
     _deleteAppointment(appointment) {
-        axios.post("http://localhost:3001/appointments/delete", JSON.stringify(appointment)).then(function () {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
+        axios.post(baseServiceURL.concat("appointments/delete"), JSON.stringify(appointment)).then(function () {
 
             let _appointments = this.state.appointments.filter(function (value, index) {
                 return (value.assignedId !== appointment.assignedId);
@@ -195,7 +197,8 @@ class AppointmentsApp extends Component {
 
     _saveAllAppointments() {
         var appointments = this.state.appointments;
-        axios.post("http://localhost:3001/appointments/create", JSON.stringify(appointments)).then(function (response) {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
+        axios.post(baseServiceURL.concat("appointments/create"), JSON.stringify(appointments)).then(function (response) {
             this.setState({
                 appointments: [],
                 appointmentsMenuVisible: false
@@ -206,6 +209,7 @@ class AppointmentsApp extends Component {
         })
     }
     _savePatientDetails() {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
         let patientId = this.state.selectedItem.assignedId;
         let actualDataRef = this.state.actualData;
         let index = actualDataRef.findIndex(function (obj) {
@@ -224,7 +228,7 @@ class AppointmentsApp extends Component {
             profession: this.refs.profession.value
         };
 
-        axios.post("http://localhost:3001/updatePatientData", JSON.stringify(updatedData)).then(function (response) {
+        axios.post(baseServiceURL.concat("updatePatientData"), JSON.stringify(updatedData)).then(function (response) {
             actualDataRef[index].firstName = this.refs.firstName.value;
             actualDataRef[index].lastName = this.refs.lastName.value;
             actualDataRef[index].personalInfo.address = this.refs.address.value;
