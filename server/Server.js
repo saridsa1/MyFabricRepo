@@ -7,7 +7,6 @@ var fs = require('fs'),
     methods = require('methods'),
     express = require('express');
 var bodyParser = require('body-parser');
-var async = require('async');
 
 
 var admin = require('firebase-admin');
