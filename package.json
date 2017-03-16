@@ -12,15 +12,15 @@
     "moment": "^2.17.1",
     "office-ui-fabric-react": "^1.14.1",
     "react": "^15.4.2",
-    "react-dom": "^15.4.2"
+    "react-dom": "^15.4.2",
+    "react-swal": "^2.0.0"
   },
   "devDependencies": {
     "concurrently": "^3.4.0",
     "react-scripts": "0.9.4"
   },
   "scripts": {
-    "start": "npm run server & npm run client",
-    "server": "node ./server/server.js",
+    "start": "npm run client",
     "client": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",

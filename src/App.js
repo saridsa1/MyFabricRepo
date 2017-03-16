@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import './App.css';
-import data from '../data/TestData.json';
 import _columns from '../data/ColumnConfig';
 
 import {css} from 'glamor';
@@ -24,19 +23,30 @@ import moment from 'moment';
 class AppointmentsApp extends Component {
     constructor(props) {
         super(props);
-        let _items = data;
-        this.state = {
-            isContextMenuVisible: false,
-            displayData: _items,
-            actualData: _items,
-            columns: _columns,
-            appointments: [],
-            loadingPatientData: true
-        };
+        this.resetState();
         axios.defaults.headers.post['Content-Type'] = 'application/json';
     }
+    reset(){
+        this.resetState();
+        this.getInitialData();
+    }
+    resetState(){
+        this.state = {
+            isContextMenuVisible: false,
+            columns: _columns,
+            appointments: [],
+            loadingPatientData: true,
+            screenTarget: null,
+            item: null,
+            appointmentsMenuVisible: false,
+            appointmentsScreenTarget: null,
+            settingsMenuVisible: false,
+            appointmentError: false,
+            addNewPatient: false
+        };
+    }
 
-    componentDidMount() {
+    getInitialData(){
         var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
         axios.get(baseServiceURL.concat("patientsInfo")).then(function (response) {
 
@@ -61,6 +71,10 @@ class AppointmentsApp extends Component {
                 })
             }
         }.bind(this))
+    }
+
+    componentDidMount() {
+        this.getInitialData();
     }
 
     _renderItemColumn(item, index, column) {
@@ -177,8 +191,6 @@ class AppointmentsApp extends Component {
             console.log(err);
             alert("An error occurred while saving the appointments");
         });
-
-
     }
 
     _onViewHistory() {
@@ -191,7 +203,8 @@ class AppointmentsApp extends Component {
 
     _dismissPatientDetailView() {
         this.setState({
-            patientDetailView: false
+            patientDetailView: false,
+            addNewPatient: false
         })
     }
 
@@ -208,13 +221,20 @@ class AppointmentsApp extends Component {
             alert("An error occurred while saving the appointments");
         })
     }
-    _savePatientDetails() {
+
+    _savePatientDetails(command) {
         var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
-        let patientId = this.state.selectedItem.assignedId;
-        let actualDataRef = this.state.actualData;
-        let index = actualDataRef.findIndex(function (obj) {
-            return patientId === obj.assignedId;
-        });
+        var patientId, index;
+        if(command === "EDIT"){
+            patientId = this.state.selectedItem.assignedId;
+            let actualDataRef = this.state.actualData;
+            index = actualDataRef.findIndex(function (obj) {
+                return patientId === obj.assignedId;
+            });
+        } 
+        if(command === "ADD"){
+            patientId = "-9.99";            
+        }
 
         let updatedData = {
             assignedId: patientId,
@@ -229,17 +249,23 @@ class AppointmentsApp extends Component {
         };
 
         axios.post(baseServiceURL.concat("updatePatientData"), JSON.stringify(updatedData)).then(function (response) {
-            actualDataRef[index].firstName = this.refs.firstName.value;
-            actualDataRef[index].lastName = this.refs.lastName.value;
-            actualDataRef[index].personalInfo.address = this.refs.address.value;
-            actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
-            actualDataRef[index].personalInfo.profession = this.refs.profession.value;
+            if(command === "EDIT"){
+                actualDataRef[index].firstName = this.refs.firstName.value;
+                actualDataRef[index].lastName = this.refs.lastName.value;
+                actualDataRef[index].personalInfo.address = this.refs.address.value;
+                actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
+                actualDataRef[index].personalInfo.profession = this.refs.profession.value;
 
-            this.setState({
-                displayData: actualDataRef,
-                patientDetailView: false,
-                actualData: actualDataRef
-            });
+                this.setState({
+                    displayData: actualDataRef,
+                    patientDetailView: false,
+                    actualData: actualDataRef
+                });
+            }
+            if(command === "ADD"){
+                this.getInitialData();
+            }
+
         }.bind(this)).catch(function (err) {
             alert("An error occurred while saving the data");
             this.setState({
@@ -248,7 +274,26 @@ class AppointmentsApp extends Component {
         }.bind(this));
 
     }
-
+    _showSettings(event){
+        this.setState({
+            settingsMenuVisible : true
+        });
+    }
+    _onSettingsMenuDismiss(){   
+        this.setState({
+            settingsMenuVisible : false
+        });             
+    }
+    _onNewPatient(){
+        this.setState({
+            addNewPatient: true
+        })
+    }
+    _dismissAppointmentError(){
+        this.setState({
+            appointmentError: false
+        });
+    }
     renderAfterLoad() {
         let appointmentsMenuItems = [];
         let dateString = moment(new Date()).format('MMMM Do YYYY, h:mm:ss a');
@@ -268,7 +313,7 @@ class AppointmentsApp extends Component {
         return (<div className="ms-Grid">
             {
                 (this.state.appointmentError) ?
-                    <MessageBar messageBarType={ MessageBarType.blocked} onDismiss={this._noop.bind(this)}
+                    <MessageBar messageBarType={ MessageBarType.blocked } onDismiss={this._dismissAppointmentError.bind(this)}
                                 isMultiline={ false }>Appointment already exists for the patient</MessageBar>
                     :
                     (null)
@@ -278,22 +323,49 @@ class AppointmentsApp extends Component {
                 boxShadow: '0 0 20px rgba(192, 192, 192, .3)',
                 padding: 20
             }) }>
-                <div className="ms-Grid-col ms-u-sm11 ms-u-md11 ms-u-lg11">
+                <div className="ms-Grid-col ms-u-sm10 ms-u-md10 ms-u-lg10">
                         <span className="ms-font-su ms-fontColor-white">
                           Good Morning !
                         </span>
                     <br/>
                     <span className="ms-font-xs ms-fontColor-white">{ dateString }</span>
                 </div>
-                <div className="ms-Grid-col ms-u-sm1 ms-u-md1 ms-u-lg1">
+                <div className="ms-Grid-col ms-u-sm2 ms-u-md2 ms-u-lg2">                    
                     <br/>
+                    <span className="ms-font-xxl ms-fontColor-white"
+                          ref={ (settingsButton) => this._settingsButton = settingsButton }>
+                          <Link data-selection-invoke={ true }
+                                      onClick={this._showSettings.bind(this, event)}>
+                                <i className="ms-Icon ms-Icon--Settings ms-fontColor-white" aria-hidden="true"></i>
+                               {this.state.settingsMenuVisible ? 
+                               <ContextualMenu
+                                    target={ this._settingsButton }
+                                    isBeakVisible={ true }
+                                    gapSpace={ 2 }
+                                    directionalHintFixed={ false }
+                                    onDismiss={this._onSettingsMenuDismiss.bind(this)}
+                                    items={
+                                        [
+                                            {
+                                                key: 'newPatient',
+                                                name: 'Add new patient',
+                                                icon: 'Add',
+                                                onClick: this._onNewPatient.bind(this)
+                                            }                                            
+                                        ]
+                                    }
+                                /> :
+                                null}       
+                          </Link>              
+                    </span>
+                    <span className="menu-spacing"/>
                     <span className="ms-font-xxl ms-fontColor-white"
                           ref={ (menuButton) => this._menuButtonElement = menuButton }>
                         {
                             (this.state.appointments.length > 0 ) ?
-                                <Link className="ms-fontColor-white" data-selection-invoke={ true }
+                                <Link data-selection-invoke={ true }
                                       onClick={this._showAppointments.bind(this, event)}>
-                                    <i className="ms-Icon ms-Icon--Contact" aria-hidden="true"><span
+                                    <i className="ms-Icon ms-Icon--Contact ms-fontColor-white" aria-hidden="true"><span
                                         className="badge">{this.state.appointments.length}</span></i>
                                     {this.state.appointmentsMenuVisible ?
                                         <Callout className='ms-CalloutExample-callout' gapSpace={ 2 }
@@ -339,13 +411,13 @@ class AppointmentsApp extends Component {
                 </div>
             </div>
             {
-                this.state.patientDetailView ?
+                this.state.addNewPatient ?
                     <Dialog
                         isOpen={ true }
                         type={ DialogType.largeHeader  }
                         onDismiss={ this._dismissPatientDetailView.bind(this) }
-                        title={this.state.selectedItem.firstName}
-                        isBlocking={ false }
+                        title="Add new patient details"
+                        isBlocking={ true }
                         containerClassName='ms-dialogMainOverride'>
                         <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName}
                                    required={ true }/>
@@ -360,13 +432,42 @@ class AppointmentsApp extends Component {
 
                         <DialogFooter>
                             <Button buttonType={ ButtonType.primary }
-                                    onClick={ this._savePatientDetails.bind(this) }>Save</Button>
+                                    onClick={ this._savePatientDetails.bind(this, "ADD") }>Save</Button>
+                            <Button onClick={ this._dismissPatientDetailView.bind(this) }>Cancel</Button>
+                        </DialogFooter>
+                    </Dialog>
+                    : (null)
+            }            
+            {
+                this.state.patientDetailView ?
+                    <Dialog
+                        isOpen={ true }
+                        type={ DialogType.largeHeader  }
+                        onDismiss={ this._dismissPatientDetailView.bind(this) }
+                        title={this.state.selectedItem.firstName}
+                        isBlocking={ true }
+                        containerClassName='ms-dialogMainOverride'>
+                        <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName}
+                                   required={ true }/>
+                        <TextField label='Last Name' ref="lastName" value={this.state.selectedItem.lastName}
+                                   required={ true }/>
+                        <TextField label='Phone number' ref="phoneNumber"
+                                   value={this.state.selectedItem.personalInfo.phoneNumber} required={ true }/>
+                        <TextField label='Address' ref="address" multiline autoAdjustHeight
+                                   value={this.state.selectedItem.personalInfo.address} required={ true }/>
+                        <TextField label='Profession' ref="profession"
+                                   value={this.state.selectedItem.personalInfo.profession}/>
+
+                        <DialogFooter>
+                            <Button buttonType={ ButtonType.primary }
+                                    onClick={ this._savePatientDetails.bind(this, "EDIT") }>Save</Button>
                             <Button onClick={ this._dismissPatientDetailView.bind(this) }>Cancel</Button>
                         </DialogFooter>
                     </Dialog>
                     : (null)
             }
-            {this.state.isContextMenuVisible ? <ContextualMenu
+            {this.state.isContextMenuVisible ? 
+                <ContextualMenu
                     target={ this.state.screenTarget }
                     isBeakVisible={ true }
                     gapSpace={ 10 }
@@ -403,7 +504,7 @@ class AppointmentsApp extends Component {
         return (
             (this.state.loadingPatientData) ?
                 (<Spinner className="html-center-align" type={ SpinnerSize.large }
-                          label='Patient data, still loading...'/>) :
+                          label='Loading... Patient data'/>) :
                 (this.renderAfterLoad())
         )
     }

@@ -110,3 +110,6 @@ body {
 .pull-right {
     float: right;
 }
+.menu-spacing{
+    padding-left: 15px;
+}
