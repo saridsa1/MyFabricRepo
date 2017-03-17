@@ -336,7 +336,7 @@ class AppointmentsApp extends Component {
                           ref={ (settingsButton) => this._settingsButton = settingsButton }>
                           <Link data-selection-invoke={ true }
                                       onClick={this._showSettings.bind(this, event)}>
-                                <i className="ms-Icon ms-Icon--Settings ms-fontColor-white" aria-hidden="true"></i>
+                                <i className="ms-Icon ms-Icon--Contact ms-fontColor-white" aria-hidden="true"></i>
                                {this.state.settingsMenuVisible ? 
                                <ContextualMenu
                                     target={ this._settingsButton }
@@ -365,7 +365,7 @@ class AppointmentsApp extends Component {
                             (this.state.appointments.length > 0 ) ?
                                 <Link data-selection-invoke={ true }
                                       onClick={this._showAppointments.bind(this, event)}>
-                                    <i className="ms-Icon ms-Icon--Contact ms-fontColor-white" aria-hidden="true"><span
+                                    <i className="ms-Icon ms-Icon--Ringer ms-fontColor-white" aria-hidden="true"><span
                                         className="badge">{this.state.appointments.length}</span></i>
                                     {this.state.appointmentsMenuVisible ?
                                         <Callout className='ms-CalloutExample-callout' gapSpace={ 2 }

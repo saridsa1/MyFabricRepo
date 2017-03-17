@@ -162,6 +162,11 @@ class Visits extends Component {
             item: null
         });
     }
+    _onSettingsMenuDismiss(){   
+        this.setState({
+            settingsMenuVisible : false
+        });             
+    }
     _onNewVisit(){
         this.setState({
             newAppointmentVisible: true
@@ -213,20 +218,20 @@ class Visits extends Component {
                     boxShadow: '0 0 20px rgba(192, 192, 192, .3)',
                     padding: 20
                 }) }>
-                    <div className="ms-Grid-col ms-u-sm10 ms-u-md10 ms-u-lg10">
+                    <div className="ms-Grid-col ms-u-sm11 ms-u-md11 ms-u-lg11">
                             <span className="ms-font-su ms-fontColor-white">
                             Good Evening !
                             </span>
                         <br/>
                         <span className="ms-font-xs ms-fontColor-white">{ dateString }</span>
                     </div>
-                    <div className="ms-Grid-col ms-u-sm2 ms-u-md2 ms-u-lg2">                    
+                    <div className="ms-Grid-col ms-u-sm1 ms-u-md1 ms-u-lg1">                    
                         <br/>
-                        <span className="ms-font-xxl ms-fontColor-white"
+                        <span className="ms-font-xxl ms-fontColor-white pull-right"
                             ref={ (settingsButton) => this._settingsButton = settingsButton }>
                             <Link data-selection-invoke={ true }
                                         onClick={this._showSettings.bind(this, event)}>
-                                    <i className="ms-Icon ms-Icon--Settings ms-fontColor-white" aria-hidden="true"></i>
+                                    <i className="ms-Icon ms-Icon--Contact ms-fontColor-white" aria-hidden="true"></i>
                                 {this.state.settingsMenuVisible ? 
                                 <ContextualMenu
                                         target={ this._settingsButton }
