@@ -2,6 +2,8 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 
 import './App.css';
+import ServiceURL from '../data/ServiceURL.json';
+import _columns from '../data/AppointmentsColumnConfig';
 import SweetAlert from 'react-swal';
 import {css} from 'glamor';
 import {DetailsList} from 'office-ui-fabric-react/lib/DetailsList';
@@ -19,12 +21,18 @@ import {
 } from 'office-ui-fabric-react/lib/Spinner';
 import axios from 'axios';
 import moment from 'moment';
+import TestData from '../data/TestData.json';
 
-class Vists extends Component {
+/**
+ * TODO:
+ * 1. Once visit details are added we need to remove them from the list of appointments
+ * 2.
+ */
+class Visits extends Component {
     constructor(props) {
         super(props);
         this.resetState();
-        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.defaults.headers.post['Content-Type'] = 'application/json';        
     }
 
     resetState(){
@@ -32,6 +40,7 @@ class Vists extends Component {
             isContextMenuVisible: false,
             columns: _columns,
             appointments: [],
+            actualDataRef : [],
             patientDetailView: false,
             loadingAppointmentsData: true,
             screenTarget: null,
@@ -43,11 +52,94 @@ class Vists extends Component {
         };
     }
 
+    _showSettings(event){
+        this.setState({
+            settingsMenuVisible : true
+        });
+    }
+
+    _onFilterChanged(text) {
+        let actualDataRef = this.state.actualData;
+        let filteredData = actualDataRef.filter(function (obj) {
+            return obj.assignedId.toString().indexOf(text) > -1;
+        });
+
+        this.setState({
+            displayData: filteredData,
+            actualData: actualDataRef,
+            columns: _columns
+        })
+    }
     componentDidMount() {
+        this.setState({
+            appointments: TestData,
+            actualDataRef: TestData,
+            loadingAppointmentsData: false
+        });
     }
 
     _noop() {
         console.log("No operation invoked");
+    }
+
+    _savePatientDetails(command) {
+        var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
+        var patientId, index;
+        let actualDataRef = this.state.actualData;
+        if(command === "EDIT"){
+            patientId = this.state.selectedItem.assignedId;            
+            index = actualDataRef.findIndex(function (obj) {
+                return patientId === obj.assignedId;
+            });
+        } 
+        if(command === "ADD"){
+            patientId = "-9.99";            
+        }
+
+        let updatedData = {
+            assignedId: patientId,
+            firstName: this.refs.firstName.value,
+            lastName: this.refs.lastName.value,
+        };
+
+        updatedData.personalInfo = {
+            address: this.refs.address.value,
+            phoneNumber: this.refs.phoneNumber.value,
+            profession: this.refs.profession.value
+        };
+
+        axios.post(baseServiceURL.concat("updatePatientData"), JSON.stringify(updatedData)).then(function (response) {
+            if(command === "EDIT"){
+                actualDataRef[index].firstName = this.refs.firstName.value;
+                actualDataRef[index].lastName = this.refs.lastName.value;
+                actualDataRef[index].personalInfo.address = this.refs.address.value;
+                actualDataRef[index].personalInfo.phoneNumber = this.refs.phoneNumber.value;
+                actualDataRef[index].personalInfo.profession = this.refs.profession.value;
+
+                this.setState({
+                    displayData: actualDataRef,
+                    patientDetailView: false,
+                    actualData: actualDataRef
+                });
+            }
+            if(command === "ADD"){
+                this.getInitialData();
+            }
+
+        }.bind(this)).catch(function (err) {
+            alert("An error occurred while saving the data");
+            this.setState({
+                patientDetailView: false
+            });
+        }.bind(this));
+
+    }
+    _onItemInvoked(event, item) {
+        this.setState({
+            screenTarget: event.target,
+            isContextMenuVisible: true,
+            selectedItem: item
+        })
     }
 
     _renderItemColumn(item, index, column) {
@@ -58,12 +150,62 @@ class Vists extends Component {
                 return <Link data-selection-invoke={ true }
                              onClick={ this._onItemInvoked.bind(this, event, item) }>{ patientId }</Link>;
             default:
-                return <span data-selection-disabled={ true } className={AppointmentsApp} data-selection-invoke={ true }
+                return <span data-selection-disabled={ true } data-selection-invoke={ true }
                              style={ {color: fieldContent} }>{ fieldContent }</span>;
         }
     }
-   
-    render() {
+
+    _onContextMenuDismiss() {
+        this.setState({
+            isContextMenuVisible: false,
+            screenTarget: null,
+            item: null
+        });
+    }
+    _onNewVisit(){
+        this.setState({
+            newAppointmentVisible: true
+        })
+    }
+    _saveVisitDetails(){
+        var assignedId = this.state.selectedItem.assignedId;
+        var filteredData = this.state.appointments.filter(function(input, index){
+            return assignedId !== input.assignedId;
+        });
+        /**
+         * 1. Make and AJAX call to the server to remove the record from visitsByDate 
+         * 2. Add visit details to visitsByPatient 
+         */
+        var reason = this.refs.visitReason.value;
+        var prescription = this.refs.prescription.value;
+
+        var payload = {
+            assignedId : assignedId,
+            visitReason: reason,
+            prescription: prescription,            
+        }
+        this.setState({
+            appointments: filteredData,
+            newAppointmentVisible: false
+        })
+        console.log(JSON.stringify(payload));
+    }
+    _dismissAppointmentDialog(){
+        this.setState({
+            newAppointmentVisible: false
+        })
+    }
+    _onEditDetails(){
+        console.log("New visit clicked");
+    }
+    _onViewHistory(){
+        console.log("New visit clicked");
+    }
+    _renderAfterLoad(){
+        let dateString = moment(new Date()).format('MMMM Do YYYY, h:mm:ss a');
+        let visitDialogHeader = "";
+        if(this.state.newAppointmentVisible)
+            visitDialogHeader = "Add visit details for "+ this.state.selectedItem.firstName;
         return (
             <div className="ms-Grid">
                 <div className="ms-Grid-row" { ...css({
@@ -118,7 +260,7 @@ class Vists extends Component {
                             <br/>
                             <div className="scrollDetailsList">
                                 <DetailsList
-                                    items={ this.state.displayData }
+                                    items={ this.state.appointments }
                                     setKey='set'
                                     columns={ this.state.columns }
                                     onRenderItemColumn={ this._renderItemColumn.bind(this) }
@@ -127,6 +269,28 @@ class Vists extends Component {
                         </div>
                     </div>
                 </div>
+                {
+                    this.state.newAppointmentVisible ?
+                       <Dialog
+                            isOpen={ true }
+                            type={ DialogType.largeHeader  }
+                            onDismiss={ this._dismissAppointmentDialog.bind(this) }
+                            title={visitDialogHeader}
+                            isBlocking={ true }
+                            containerClassName='ms-dialogMainOverride'>
+                            <TextField label='Reason for visit' ref="visitReason" multiline autoAdjustHeight
+                                    value="" required={ true }/>
+                            <TextField label='Prescription' ref="prescription" multiline autoAdjustHeight
+                                    value="" required={ true }/>            
+                            <DialogFooter>
+                                <Button buttonType={ ButtonType.primary }
+                                        onClick={ this._saveVisitDetails.bind(this) }>Save</Button>
+                                <Button onClick={ this._dismissAppointmentDialog.bind(this) }>Cancel</Button>
+                            </DialogFooter>
+                        </Dialog>
+                    :
+                    (null)
+                }
                 {
                     this.state.patientDetailView ?
                         <Dialog
@@ -164,16 +328,11 @@ class Vists extends Component {
                             title="Add new patient details"
                             isBlocking={ true }
                             containerClassName='ms-dialogMainOverride'>
-                            <TextField label='First Name' ref="firstName" value={this.state.selectedItem.firstName}
-                                    required={ true }/>
-                            <TextField label='Last Name' ref="lastName" value={this.state.selectedItem.lastName}
-                                    required={ true }/>
-                            <TextField label='Phone number' ref="phoneNumber"
-                                    value={this.state.selectedItem.personalInfo.phoneNumber} required={ true }/>
-                            <TextField label='Address' ref="address" multiline autoAdjustHeight
-                                    value={this.state.selectedItem.personalInfo.address} required={ true }/>
-                            <TextField label='Profession' ref="profession"
-                                    value={this.state.selectedItem.personalInfo.profession}/>
+                            <TextField label='First Name' ref="firstName" value="" required={ true }/>
+                            <TextField label='Last Name' ref="lastName" value="" required={ true }/>
+                            <TextField label='Phone number' ref="phoneNumber" value="" required={ true }/>
+                            <TextField label='Address' ref="address" multiline autoAdjustHeight value="" required={ true }/>
+                            <TextField label='Profession' ref="profession" value=""/>
 
                             <DialogFooter>
                                 <Button buttonType={ ButtonType.primary }
@@ -219,6 +378,15 @@ class Vists extends Component {
         )        
     }
 
+    render() {
+        return (
+            (this.state.loadingAppointmentsData) ?
+                (<Spinner className="html-center-align" type={ SpinnerSize.large }
+                          label='Loading... appointments'/>) :
+                (this._renderAfterLoad())
+        )
+    }
+
 }
 
-export default Vists;
+export default Visits;

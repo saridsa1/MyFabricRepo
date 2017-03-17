@@ -225,9 +225,9 @@ class AppointmentsApp extends Component {
     _savePatientDetails(command) {
         var baseServiceURL = ServiceURL["Production"]["BaseURL"]; 
         var patientId, index;
+        let actualDataRef = this.state.actualData;
         if(command === "EDIT"){
-            patientId = this.state.selectedItem.assignedId;
-            let actualDataRef = this.state.actualData;
+            patientId = this.state.selectedItem.assignedId;            
             index = actualDataRef.findIndex(function (obj) {
                 return patientId === obj.assignedId;
             });

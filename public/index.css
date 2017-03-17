@@ -96,6 +96,9 @@ body {
     overflow-y: scroll;
     max-height: 400px;
 }
+.scrollDetailsList .ms-DetailsHeader{
+    min-width: 96%;
+}
 
 .ms-CalloutExample-callout > .ms-Callout-main {
     padding-bottom: 10px;
